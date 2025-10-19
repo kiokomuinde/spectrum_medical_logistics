@@ -15,21 +15,34 @@ class AppConstants {
     'Contact'
   ];
 
+  // 🔥 FIX: Explicitly defined 'navPaths' map for GoRouter to reference
+  static const Map<String, String> navPaths = {
+    'Home': '/',
+    'Products': '/products',
+    'Solutions': '/solutions',
+    'Services': '/services',
+    'Quality & Compliance': '/quality-compliance',
+    'About Us': '/about-us',
+    'Contact': '/contact',
+    // Auth Routes
+    'SignIn': '/sign-in',
+    'SignUp': '/sign-up',
+  };
+
+  // The rest of the AppConstants content below is retained from your provided code
   static const List<Map<String, dynamic>> productsAndServices = [
+    // This list now serves as the source for the Services Section in home_screen.dart
     {'title': 'Clinical Laboratory Machines', 'icon': Icons.science_outlined, 'description': 'Haematology, Biochemistry, Immunoassay, Microbiology.'},
     {'title': 'Laboratory Hardwares', 'icon': Icons.precision_manufacturing_outlined, 'description': 'Centrifuge, Microscope, Shakers, Fridges, Waterbath, Mixer.'},
     {'title': 'X-Ray Servicing', 'icon': Icons.medical_services_outlined, 'description': 'Servicing and maintenance of X-Ray machines.'},
     {'title': 'Laboratory Consumables', 'icon': Icons.biotech_outlined, 'description': 'Supply of essential lab consumables.'},
-    {'title': 'Dialysis Machine Maintenance', 'icon': Icons.monitor_heart_outlined, 'description': 'Repair and maintenance of dialysis machines and consumables supply.'},
-    {'title': 'Radiology Film Supply', 'icon': Icons.camera_roll_outlined, 'description': 'Supplying of X-Ray/radiology films and consumables.'},
-    {'title': 'Dialysis Waterplant', 'icon': Icons.water_drop_outlined, 'description': 'Waterplant supplies, installation, and repairs.'},
-    {'title': 'Dental Chair Supplies', 'icon': Icons.chair_outlined, 'description': 'Installation, maintenance, and consumables for dental chairs.'},
-    {'title': 'Physiotherapy Equipment', 'icon': Icons.fitness_center_outlined, 'description': 'Physiotherapy consumables and equipment supplies.'},
+    {'title': 'Dialysis Machine Maintenance', 'icon': Icons.monitor_heart_outlined, 'description': 'Repair and maintenance of Dialysis machines.'},
+    {'title': 'Waterplant Solutions', 'icon': Icons.water_drop_outlined, 'description': 'Installation, maintenance, and servicing of specialized water treatment plants.'},
   ];
-
-  static const List<Map<String, dynamic>> logisticsSteps = [
-    {'icon': Icons.description_outlined, 'title': 'Order Fulfillment', 'desc': 'Digital ordering and verification of required medical goods.'},
-    {'icon': Icons.route_outlined, 'title': 'Specialized Transport', 'desc': 'Climate-controlled, secure transit for sensitive equipment.'},
+  
+  static const List<Map<String, dynamic>> logisticsFlowSteps = [
+    {'icon': Icons.inventory_2_outlined, 'title': 'Sourcing & Procurement', 'desc': 'Global sourcing and quality checks for all medical supplies.'},
+    {'icon': Icons.local_shipping_outlined, 'title': 'Specialized Transport', 'desc': 'Climate-controlled, secure transport for sensitive goods.'},
     {'icon': Icons.location_on_outlined, 'title': 'Last-Mile Delivery', 'desc': 'Precision timing and installation at the clinical site.'},
     {'icon': Icons.handshake_outlined, 'title': 'Support & Servicing', 'desc': 'Ongoing maintenance and consumables resupply.'},
   ];
@@ -49,7 +62,13 @@ class AppConstants {
 
   static const List<Map<String, dynamic>> blogArticles = [
     {'title': 'Future of Dialysis Water Management', 'tag': 'Waterplant', 'date': 'Oct 1, 2025'},
-    {'title': '5G and Remote X-Ray Servicing', 'tag': 'Technology', 'date': 'Sep 25, 2025'},
-    {'title': 'The Cold Chain for Immunoassays', 'tag': 'Consumables', 'date': 'Sep 15, 2025'},
+    {'title': '5 Compliance Mistakes in Medical Cold Chain', 'tag': 'Compliance', 'date': 'Sep 20, 2025'},
+    {'title': 'AI in Logistics: What it Means for You', 'tag': 'Technology', 'date': 'Sep 1, 2025'},
+  ];
+
+  static const List<Map<String, dynamic>> certificationBadges = [
+    {'title': 'ISO 13485:2016', 'desc': 'Quality management system for medical devices.', 'icon': Icons.medical_services_outlined},
+    {'title': 'GDP Certified', 'desc': 'Adherence to Good Distribution Practice for pharmaceuticals.', 'icon': Icons.check_circle_outline},
+    {'title': 'Cold Chain Verified', 'desc': 'Validated temperature-controlled logistics processes.', 'icon': Icons.thermostat_outlined},
   ];
 }

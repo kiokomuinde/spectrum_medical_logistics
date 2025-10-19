@@ -63,6 +63,9 @@ class AppFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isDesktop = MediaQuery.of(context).size.width > 1000;
+    
+    // REDUCED PADDING for full width
+    final double horizontalPadding = isDesktop ? 40.0 : 16.0;
 
     return Container(
       // 1. Set the standard base background color
@@ -82,8 +85,8 @@ class AppFooter extends StatelessWidget {
               stops: const [0.0, 0.4, 1.0],
             ),
           ),
-          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 80.0 : 20.0, vertical: 40.0),
-          constraints: const BoxConstraints(maxWidth: 1400), 
+          // APPLY REDUCED PADDING
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 40.0),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,10 +94,12 @@ class AppFooter extends StatelessWidget {
               isDesktop
                   ? Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // Adjusted layout for desktop
                       children: [
-                        // 1. Company Logo & Info 
-                        const Expanded(flex: 2, child: _FooterCompanyInfo()),
+                        // 1. Company Logo & Info - BIGGER WIDTH (flex: 3)
+                        const Expanded(flex: 3, child: _FooterCompanyInfo()),
+                        // Spacer for separation
+                        const SizedBox(width: 40), 
                         // 2. Navigation Links
                         Expanded(flex: 2, child: FooterLinks(title: 'NAVIGATION', links: AppConstants.navLinks.sublist(0, 4))),
                         // 3. Product Links 1
@@ -170,7 +175,7 @@ class _FooterCompanyInfo extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'MEDICAL SOLUTIONS',
+                  'MEDICAL LOGISTICS', // UPDATED TEXT
                   style: const TextStyle(
                     color: Colors.white, // Pure white
                     fontSize: 12,
