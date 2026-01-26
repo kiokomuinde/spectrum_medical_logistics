@@ -1,13 +1,17 @@
 // lib/screens/auth_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart'; 
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 
-// --- MAIN AUTH SCREEN WIDGET (Handles both Sign In and Sign Up) ---
+// --- REQUIRED EXTERNAL WIDGET IMPORTS ---
+import '../widgets/responsive_navbar.dart'; 
+import '../widgets/app_footer.dart';        
+
 class AuthScreen extends StatefulWidget {
   final bool isSignUp;
 
-  // Constructor determines initial state based on the route
   const AuthScreen({super.key, required this.isSignUp});
 
   @override
@@ -16,10 +20,16 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   late bool _isSignUp;
+  bool _isLoading = false; 
+  bool _obscurePassword = true; 
+  String? _firebaseErrorMessage; 
+  
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _facilityController = TextEditingController();
+  
   bool _agreedToTerms = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -32,38 +42,66 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void didUpdateWidget(covariant AuthScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update state if the route changes (e.g., from /sign-in to /sign-up)
     if (widget.isSignUp != oldWidget.isSignUp) {
       setState(() {
         _isSignUp = widget.isSignUp;
+        _firebaseErrorMessage = null; 
       });
     }
   }
 
-  // Smoothly toggles between Sign In and Sign Up states
   void _toggleAuthMode() {
-    // Use GoRouter to update the URL for deep linking/browser history
     context.go(_isSignUp ? '/sign-in' : '/sign-up');
   }
 
-  // Placeholder for authentication logic
-  void _submitAuthForm() {
+  Future<void> _submitAuthForm() async {
+    setState(() => _firebaseErrorMessage = null);
+
+    // This now validates the Email, Password, AND the Terms Checkbox
     if (_formKey.currentState!.validate()) {
-      if (_isSignUp && !_agreedToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must agree to the Terms of Service to sign up.')),
-        );
-        return;
+      setState(() => _isLoading = true);
+
+      try {
+        if (_isSignUp) {
+          await _authService.signUp(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+            fullName: _nameController.text.trim(),
+            facilityName: _facilityController.text.trim(),
+          );
+        } else {
+          await _authService.signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+        }
+
+        if (mounted) context.go('/'); 
+
+      } on FirebaseAuthException catch (e) {
+        setState(() {
+          switch (e.code) {
+            case 'user-not-found':
+              _firebaseErrorMessage = "No account exists for this email.";
+              break;
+            case 'wrong-password':
+              _firebaseErrorMessage = "Incorrect password. Please try again.";
+              break;
+            case 'email-already-in-use':
+              _firebaseErrorMessage = "This email is already registered.";
+              break;
+            case 'weak-password':
+              _firebaseErrorMessage = "Password is too weak. Try a stronger one.";
+              break;
+            default:
+              _firebaseErrorMessage = e.message ?? "An error occurred. Try again.";
+          }
+        });
+      } catch (e) {
+        setState(() => _firebaseErrorMessage = "Connection error. Please try again.");
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-      
-      // Placeholder logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${_isSignUp ? 'Signing Up' : 'Signing In'} as ${_emailController.text}'),
-        ),
-      );
-      // Navigate to home after successful auth (placeholder)
-      context.go('/');
     }
   }
 
@@ -72,164 +110,244 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     bool isDesktop = MediaQuery.of(context).size.width > 800;
     
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(40.0),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              child: Padding(
-                padding: EdgeInsets.all(isDesktop ? 50.0 : 30.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      // --- Title ---
-                      Text(
-                        _isSignUp ? 'Create Your Account' : 'Welcome Back',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                          color: AppColors.darkBlue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _isSignUp ? 'Join Spectrum for a seamless logistics experience.' : 'Sign in to access your dashboard and services.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textMuted),
-                      ),
-                      const SizedBox(height: 30),
-
-                      // --- Sign Up Specific Fields ---
-                      if (_isSignUp) ...[
-                        _AuthTextFormField(
-                          controller: _nameController,
-                          labelText: 'Full Name',
-                          icon: Icons.person_outline,
-                        ),
-                        const SizedBox(height: 20),
-                        _AuthTextFormField(
-                          controller: _facilityController,
-                          labelText: 'Facility/Company Name',
-                          icon: Icons.business_outlined,
-                          isRequired: false,
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // --- Common Fields ---
-                      _AuthTextFormField(
-                        controller: _emailController,
-                        labelText: 'Email Address',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 20),
-                      _AuthTextFormField(
-                        controller: _passwordController,
-                        labelText: 'Password',
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                      ),
-                      const SizedBox(height: 30),
-
-                      // --- Terms Checkbox (Sign Up Only) ---
-                      if (_isSignUp) ...[
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
-                              activeColor: AppColors.primaryGreen,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const ResponsiveNavBar(),
+            Container(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 20.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: Card(
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    child: Padding(
+                      padding: EdgeInsets.all(isDesktop ? 50.0 : 30.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            Text(
+                              _isSignUp ? 'Create Your Account' : 'Welcome Back',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                                color: AppColors.darkBlue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            const Expanded(
+                            const SizedBox(height: 10),
+                            Text(
+                              _isSignUp 
+                                ? 'Join Spectrum for a seamless logistics experience.' 
+                                : 'Sign in to access your dashboard and services.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: AppColors.textMuted),
+                            ),
+                            
+                            if (_firebaseErrorMessage != null) ...[
+                              const SizedBox(height: 20),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  _firebaseErrorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                            
+                            const SizedBox(height: 30),
+
+                            if (_isSignUp) ...[
+                              _AuthTextFormField(
+                                controller: _nameController,
+                                labelText: 'Full Name',
+                                icon: Icons.person_outline,
+                                validator: (val) => (val == null || val.isEmpty) ? 'Name is required' : null,
+                              ),
+                              const SizedBox(height: 20),
+                              _AuthTextFormField(
+                                controller: _facilityController,
+                                labelText: 'Facility/Company Name',
+                                icon: Icons.business_outlined,
+                                isRequired: false,
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            _AuthTextFormField(
+                              controller: _emailController,
+                              labelText: 'Email Address',
+                              icon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (val) {
+                                if (val == null || val.isEmpty) return 'Email is required';
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val)) {
+                                  return 'Enter a valid email address';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            _AuthTextFormField(
+                              controller: _passwordController,
+                              labelText: 'Password',
+                              icon: Icons.lock_outline,
+                              obscureText: _obscurePassword,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  color: AppColors.primaryBlue,
+                                ),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                              validator: (val) {
+                                if (val == null || val.isEmpty) return 'Password is required';
+                                if (val.length < 8) return 'Password must be at least 8 characters';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            // --- UPDATED TERMS & CONDITIONS WITH RED VALIDATION ---
+                            if (_isSignUp) ...[
+                              FormField<bool>(
+                                initialValue: _agreedToTerms,
+                                validator: (value) {
+                                  if (value == null || value == false) {
+                                    return 'You must accept the terms and conditions';
+                                  }
+                                  return null;
+                                },
+                                builder: (FormFieldState<bool> state) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Checkbox(
+                                            value: state.value,
+                                            onChanged: (bool? value) {
+                                              state.didChange(value);
+                                              setState(() => _agreedToTerms = value ?? false);
+                                            },
+                                            activeColor: AppColors.primaryGreen,
+                                            // Makes the checkbox border red on error
+                                            side: state.hasError 
+                                              ? const BorderSide(color: Colors.red, width: 2) 
+                                              : BorderSide(color: AppColors.textMuted.withOpacity(0.5)),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              'I agree to the Terms of Service and Privacy Policy.',
+                                              style: TextStyle(
+                                                // Makes the label text red on error
+                                                color: state.hasError ? Colors.red : AppColors.textMuted, 
+                                                fontSize: 13,
+                                                fontWeight: state.hasError ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (state.hasError)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 12.0, top: 4.0),
+                                          child: Text(
+                                            state.errorText!,
+                                            style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            _isLoading 
+                              ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+                              : _GradientButton(
+                                  text: _isSignUp ? 'Sign Up' : 'Sign In',
+                                  onPressed: _submitAuthForm,
+                                  gradient: AppColors.gentleHighlightGradient,
+                                ),
+                            
+                            const SizedBox(height: 20),
+                            const _Separator(),
+                            const SizedBox(height: 20),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _SocialLoginButton(label: 'Google', onTap: () {}),
+                                const SizedBox(width: 20),
+                                _SocialLoginButton(label: 'Office365', onTap: () {}),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 30),
+
+                            GestureDetector(
+                              onTap: _toggleAuthMode,
                               child: Text(
-                                'I agree to the Terms of Service and Privacy Policy.',
-                                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                _isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppColors.primaryBlue,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                      ],
-
-                      // --- Submit Button ---
-                      _GradientButton(
-                        text: _isSignUp ? 'Sign Up' : 'Sign In',
-                        onPressed: _submitAuthForm,
-                        gradient: AppColors.gentleHighlightGradient,
                       ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // --- Separator ---
-                      const _Separator(),
-                      
-                      const SizedBox(height: 20),
-
-                      // --- Social Logins ---
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _SocialLoginButton(label: 'Google', onTap: () {}),
-                          const SizedBox(width: 20),
-                          _SocialLoginButton(label: 'Office365', onTap: () {}),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 30),
-
-                      // --- Switch Auth Mode ---
-                      GestureDetector(
-                        onTap: _toggleAuthMode,
-                        child: Text(
-                          _isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+            const AppFooter(),
+          ],
         ),
       ),
     );
   }
 }
 
+// --- SUB-WIDGETS ---
 
-// --- Reusable Form Field ---
 class _AuthTextFormField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final IconData icon;
-  final bool isPassword;
+  final bool obscureText;
+  final Widget? suffixIcon;
   final TextInputType keyboardType;
   final bool isRequired;
+  final String? Function(String?)? validator;
 
   const _AuthTextFormField({
     required this.controller,
     required this.labelText,
     required this.icon,
-    this.isPassword = false,
+    this.obscureText = false,
+    this.suffixIcon,
     this.keyboardType = TextInputType.text,
     this.isRequired = true,
+    this.validator,
   });
 
   @override
@@ -237,14 +355,12 @@ class _AuthTextFormField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      obscureText: isPassword,
+      obscureText: obscureText,
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: Icon(icon, color: AppColors.primaryBlue),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: const BorderSide(color: AppColors.textMuted),
-        ),
+        suffixIcon: suffixIcon,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
           borderSide: BorderSide(color: AppColors.textMuted.withOpacity(0.5)),
@@ -253,9 +369,9 @@ class _AuthTextFormField extends StatelessWidget {
           borderRadius: BorderRadius.circular(10.0),
           borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2.0),
         ),
-        labelStyle: const TextStyle(color: AppColors.textMuted),
+        errorStyle: const TextStyle(fontWeight: FontWeight.bold),
       ),
-      validator: (value) {
+      validator: validator ?? (value) {
         if (isRequired && (value == null || value.isEmpty)) {
           return 'Please enter your $labelText';
         }
@@ -265,8 +381,6 @@ class _AuthTextFormField extends StatelessWidget {
   }
 }
 
-
-// --- Reusable Gradient Button ---
 class _GradientButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -307,11 +421,9 @@ class _GradientButton extends StatelessWidget {
   }
 }
 
-// --- Reusable Social Login Button (Placeholder) ---
 class _SocialLoginButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-
   const _SocialLoginButton({required this.label, required this.onTap});
 
   @override
@@ -329,7 +441,6 @@ class _SocialLoginButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Using placeholder Icons
             Icon(label == 'Google' ? Icons.mail_outline : Icons.laptop_windows, size: 20, color: AppColors.darkBlue),
             const SizedBox(width: 8),
             Text(label, style: const TextStyle(color: AppColors.darkBlue, fontWeight: FontWeight.bold)),
@@ -340,17 +451,15 @@ class _SocialLoginButton extends StatelessWidget {
   }
 }
 
-// --- Separator Widget ---
 class _Separator extends StatelessWidget {
   const _Separator();
-
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         const Expanded(child: Divider(color: AppColors.textMuted)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
           child: Text('OR', style: TextStyle(color: AppColors.textMuted)),
         ),
         const Expanded(child: Divider(color: AppColors.textMuted)),
