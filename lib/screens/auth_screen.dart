@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; 
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 
@@ -33,6 +34,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   bool _agreedToTerms = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  // NEW: Specifically to validate only the terms checkbox for social logins
+  final GlobalKey<FormFieldState<bool>> _termsCheckboxKey = GlobalKey<FormFieldState<bool>>();
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +50,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       setState(() {
         _isSignUp = widget.isSignUp;
         _firebaseErrorMessage = null; 
+        _agreedToTerms = false;
       });
     }
   }
@@ -54,10 +59,38 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     context.go(_isSignUp ? '/sign-in' : '/sign-up');
   }
 
+  // --- GOOGLE SIGN IN HANDLER (UPDATED VALIDATION) ---
+  Future<void> _handleGoogleSignIn() async {
+    // Check Terms & Conditions ONLY if on Sign Up screen
+    if (_isSignUp) {
+      final bool isTermsValidated = _termsCheckboxKey.currentState?.validate() ?? false;
+      if (!isTermsValidated) {
+        setState(() => _firebaseErrorMessage = "Please accept the terms and conditions.");
+        return; 
+      }
+    }
+
+    setState(() {
+      _isLoading = true;
+      _firebaseErrorMessage = null;
+    });
+
+    try {
+      await _authService.signInWithGoogle();
+      if (mounted) context.go('/'); 
+    } on FirebaseAuthException catch (e) {
+      setState(() => _firebaseErrorMessage = e.message ?? "Google Sign-In failed.");
+    } catch (e) {
+      setState(() => _firebaseErrorMessage = "An unexpected error occurred.");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _submitAuthForm() async {
     setState(() => _firebaseErrorMessage = null);
 
-    // This now validates the Email, Password, AND the Terms Checkbox
+    // Standard Form Validation (Validates all fields)
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
@@ -91,14 +124,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               _firebaseErrorMessage = "This email is already registered.";
               break;
             case 'weak-password':
-              _firebaseErrorMessage = "Password is too weak. Try a stronger one.";
+              _firebaseErrorMessage = "Password is too weak.";
               break;
             default:
-              _firebaseErrorMessage = e.message ?? "An error occurred. Try again.";
+              _firebaseErrorMessage = e.message ?? "An error occurred.";
           }
         });
       } catch (e) {
-        setState(() => _firebaseErrorMessage = "Connection error. Please try again.");
+        setState(() => _firebaseErrorMessage = "Connection error.");
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -220,9 +253,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             ),
                             const SizedBox(height: 20),
 
-                            // --- UPDATED TERMS & CONDITIONS WITH RED VALIDATION ---
                             if (_isSignUp) ...[
                               FormField<bool>(
+                                key: _termsCheckboxKey, 
                                 initialValue: _agreedToTerms,
                                 validator: (value) {
                                   if (value == null || value == false) {
@@ -243,7 +276,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                               setState(() => _agreedToTerms = value ?? false);
                                             },
                                             activeColor: AppColors.primaryGreen,
-                                            // Makes the checkbox border red on error
                                             side: state.hasError 
                                               ? const BorderSide(color: Colors.red, width: 2) 
                                               : BorderSide(color: AppColors.textMuted.withOpacity(0.5)),
@@ -252,7 +284,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                             child: Text(
                                               'I agree to the Terms of Service and Privacy Policy.',
                                               style: TextStyle(
-                                                // Makes the label text red on error
                                                 color: state.hasError ? Colors.red : AppColors.textMuted, 
                                                 fontSize: 13,
                                                 fontWeight: state.hasError ? FontWeight.bold : FontWeight.normal,
@@ -288,13 +319,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             const _Separator(),
                             const SizedBox(height: 20),
 
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _SocialLoginButton(label: 'Google', onTap: () {}),
-                                const SizedBox(width: 20),
-                                _SocialLoginButton(label: 'Office365', onTap: () {}),
-                              ],
+                            // --- GOOGLE SIGN IN BUTTON (SPANNING FULL WIDTH) ---
+                            _SocialLoginButton(
+                              label: 'Continue with Google', 
+                              onTap: _isLoading ? () {} : _handleGoogleSignIn
                             ),
                             
                             const SizedBox(height: 30),
@@ -430,20 +458,32 @@ class _SocialLoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 150,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        // Removed fixed width so it spans the Form width
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.lightBackground,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.textMuted.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(label == 'Google' ? Icons.mail_outline : Icons.laptop_windows, size: 20, color: AppColors.darkBlue),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: AppColors.darkBlue, fontWeight: FontWeight.bold)),
+            const FaIcon(
+              FontAwesomeIcons.google, 
+              size: 20, 
+              color: Colors.redAccent,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label, 
+              style: const TextStyle(
+                color: AppColors.darkBlue, 
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ),
