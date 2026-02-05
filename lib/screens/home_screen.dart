@@ -15,7 +15,7 @@ double _getHorizontalPadding(BuildContext context) {
 }
 // ----------------------------------------------
 
-// --- NEW KEY METRICS DATA (Professional Trust Building) ---
+// --- KEY METRICS DATA ---
 final List<Map<String, dynamic>> _keyMetrics = const [
   {'value': '99.9%', 'label': 'On-Time Delivery', 'icon': Icons.rocket_launch},
   {'value': 'ISO', 'label': '13485 Certified', 'icon': Icons.verified_user},
@@ -36,7 +36,6 @@ class HomeScreen extends StatelessWidget {
           children: [
             _HeroSection(),
             _KeyMetricBar(),
-            // REMOVED: _ProductSalesSection(), 
             _ServicesSection(),
             _QualityComplianceSection(),
             _TechnologySection(),
@@ -107,7 +106,7 @@ class _SectionContainer extends StatelessWidget {
   }
 }
 
-// --- Hero Section ---
+// --- UPDATED: Hero Section with Scrim Overlay ---
 class _HeroSection extends StatelessWidget {
   const _HeroSection();
 
@@ -121,6 +120,7 @@ class _HeroSection extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: [
+          // 1. The Background Image
           Positioned.fill(
             child: Image.asset(
               'assets/images/hero_background.webp',
@@ -131,11 +131,18 @@ class _HeroSection extends StatelessWidget {
               ),
             ),
           ),
+          // 2. The Scrim (Gradient Overlay)
+          // This ensures the white text pops against any background
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(gradient: AppColors.sereneGradient),
+              decoration: BoxDecoration(
+                // REPLACED: AppColors.sereneGradient (too light)
+                // WITH: AppColors.heroScrimGradient (darker, better contrast)
+                gradient: AppColors.heroScrimGradient,
+              ),
             ),
           ),
+          // 3. The Text Content
           Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Column(
@@ -148,17 +155,31 @@ class _HeroSection extends StatelessWidget {
                     color: AppColors.textLight,
                     fontWeight: FontWeight.w900,
                     fontSize: isDesktop ? 60 : 36,
+                    // Added a subtle shadow to text for extra legibility
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 2),
+                        blurRadius: 4.0,
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  "Empowering healthcare providers with premium medical\nequipment and specialized consumables across the globe.",
-                  style: TextStyle(
-                    color: AppColors.textLight.withOpacity(0.9),
-                    fontSize: isDesktop ? 22 : 16,
-                    height: 1.5,
+                SizedBox(
+                  width: isDesktop ? 700 : double.infinity, // Limit width on desktop for readability
+                  child: Text(
+                    "Empowering healthcare providers with premium medical\nequipment and specialized consumables across the globe.",
+                    style: TextStyle(
+                      color: AppColors.textLight.withOpacity(0.95), // Increased opacity slightly
+                      fontSize: isDesktop ? 22 : 16,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 30),
+                // Optional: Add a call to action button here in the future
               ],
             ),
           ),

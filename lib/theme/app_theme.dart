@@ -19,12 +19,12 @@ class AppColors {
   static const Color textMuted = Color(0xFF78909C); 
   static const Color textLight = Colors.white; 
   
-  // --- Gradients (Reverted to Original) ---
+  // --- Gradients ---
   static final Gradient sereneGradient = LinearGradient(
     colors: [
-      primaryBlue.withOpacity(0.15), // Reduced opacity
-      teal.withOpacity(0.15),      // Reduced opacity
-      accentGreen.withOpacity(0.15) // Reduced opacity
+      primaryBlue.withOpacity(0.15), 
+      teal.withOpacity(0.15),      
+      accentGreen.withOpacity(0.15) 
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -41,6 +41,21 @@ class AppColors {
     colors: [darkBlue, Color(0xFF0D47A1)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
+  );
+
+  // *** NEW: Hero Scrim Gradient for Text Legibility ***
+  // This creates a dark fade from left (text side) to right, 
+  // ensuring the white text is readable over any machinery image.
+  static final LinearGradient heroScrimGradient = LinearGradient(
+    colors: [
+      darkBlue.withOpacity(0.90), // Very dark blue on the left (behind text)
+      darkBlue.withOpacity(0.70), // Fading out
+      darkBlue.withOpacity(0.30), // Mostly transparent
+      Colors.transparent,         // Fully transparent on the right
+    ],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    stops: const [0.0, 0.4, 0.7, 1.0],
   );
 }
 
@@ -89,7 +104,6 @@ ThemeData getAppTheme() {
         ),
       ),
       
-      // 🔥 FIX: Corrected the type to CardThemeData to resolve the compilation error.
       cardTheme: CardThemeData( 
         elevation: 4.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
