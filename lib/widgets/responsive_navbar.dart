@@ -325,6 +325,8 @@ class ResponsiveNavBar extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 25),
                 _NavBarLink(text: "Products", onPressed: () => context.go('/products')),
                 _NavBarLink(text: "Solutions", onPressed: () {}),
+                // --- ADDED UPLOAD BUTTON HERE (DESKTOP) ---
+                _NavBarLink(text: "Upload", onPressed: () => context.go('/upload')),
               ],
 
               const Spacer(),
@@ -516,6 +518,8 @@ class _MobileDrawer extends StatelessWidget {
                     
                     _buildMobileNavItem(context, "Products", Icons.inventory_2_outlined, () => context.go('/products')),
                     _buildMobileNavItem(context, "Solutions", Icons.lightbulb_outline, () {}),
+                    // --- ADDED UPLOAD BUTTON HERE (MOBILE) ---
+                    _buildMobileNavItem(context, "Upload", Icons.cloud_upload_outlined, () => context.go('/upload')),
                     
                     const Divider(height: 40, color: Color(0xFFEEEEEE)),
                     

@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,7 +12,8 @@ import 'package:spectrum_medical_logistics/constants/app_constants.dart';
 import 'package:spectrum_medical_logistics/screens/home_screen.dart';
 import 'package:spectrum_medical_logistics/screens/auth_screen.dart'; 
 import 'package:spectrum_medical_logistics/screens/product_catalog_screen.dart';
-import 'package:spectrum_medical_logistics/screens/medical_product_detail_screen.dart'; // <--- IMPORTED
+import 'package:spectrum_medical_logistics/screens/medical_product_detail_screen.dart'; 
+import 'package:spectrum_medical_logistics/screens/product_upload_screen.dart'; // <--- IMPORTED UPLOAD SCREEN
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +43,8 @@ const Map<String, String> _navPaths = {
   'SignIn': '/sign-in',
   'SignUp': '/sign-up',
   'Products': '/products',
-  'ProductDetail': '/product/:id', // <--- DYNAMIC ROUTE
+  'ProductDetail': '/product/:id',
+  'Upload': '/upload', // <--- ADDED UPLOAD PATH
 };
 
 // --- GO ROUTER SETUP ---
@@ -64,7 +67,6 @@ final GoRouter _router = GoRouter(
       path: _navPaths['Products']!,
       builder: (context, state) => const ProductCatalogScreen(),
     ),
-    // --- PRODUCT DETAIL ROUTE ---
     GoRoute(
       path: _navPaths['ProductDetail']!,
       builder: (context, state) {
@@ -72,6 +74,11 @@ final GoRouter _router = GoRouter(
         final productId = state.pathParameters['id'] ?? 'unknown';
         return MedicalProductDetailScreen(productId: productId);
       },
+    ),
+    // --- ADDED UPLOAD ROUTE ---
+    GoRoute(
+      path: _navPaths['Upload']!,
+      builder: (context, state) => const ProductUploadScreen(),
     ),
   ],
 );
