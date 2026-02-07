@@ -324,8 +324,7 @@ class ResponsiveNavBar extends StatelessWidget implements PreferredSizeWidget {
                 const _ProSearchBar(),
                 const SizedBox(width: 25),
                 _NavBarLink(text: "Products", onPressed: () => context.go('/products')),
-                _NavBarLink(text: "Solutions", onPressed: () {}),
-                // --- ADDED UPLOAD BUTTON HERE (DESKTOP) ---
+                _NavBarLink(text: "Solutions", onPressed: () => context.go('/solutions')),
                 _NavBarLink(text: "Upload", onPressed: () => context.go('/upload')),
               ],
 
@@ -342,7 +341,7 @@ class ResponsiveNavBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                     const SizedBox(width: 12),
 
-                    // --- Help (Now includes Support Channels) ---
+                    // --- Help ---
                     _NavBarActionDropdown(
                       icon: Icons.help_outline,
                       label: "Help",
@@ -351,12 +350,12 @@ class ResponsiveNavBar extends StatelessWidget implements PreferredSizeWidget {
                     const SizedBox(width: 20),
                   ],
 
-                  // --- Medical Cart ---
+                  // --- Medical Cart (UPDATED) ---
                   Stack(
                     alignment: Alignment.topRight,
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () => context.go('/cart'), // <--- UPDATED ACTION
                         icon: ShaderMask(
                           shaderCallback: (bounds) => _brandGradient.createShader(bounds),
                           child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 28),
@@ -443,9 +442,8 @@ class ResponsiveNavBar extends StatelessWidget implements PreferredSizeWidget {
       _buildPopupLink(null, "Track an order"),
       _buildPopupLink(null, "Returns & Refunds"),
       
-      const PopupMenuDivider(), // Divider for support channels
+      const PopupMenuDivider(),
       
-      // --- Support Channels moved here for Desktop ---
       _buildPopupLink(Icons.support_agent, "Live Chat Support", iconColor: AppColors.primaryBlue),
       _buildPopupLink(Icons.chat_bubble_outline, "WhatsApp Support", iconColor: AppColors.primaryGreen),
     ];
@@ -517,8 +515,7 @@ class _MobileDrawer extends StatelessWidget {
                     const SizedBox(height: 32),
                     
                     _buildMobileNavItem(context, "Products", Icons.inventory_2_outlined, () => context.go('/products')),
-                    _buildMobileNavItem(context, "Solutions", Icons.lightbulb_outline, () {}),
-                    // --- ADDED UPLOAD BUTTON HERE (MOBILE) ---
+                    _buildMobileNavItem(context, "Solutions", Icons.lightbulb_outline, () => context.go('/solutions')),
                     _buildMobileNavItem(context, "Upload", Icons.cloud_upload_outlined, () => context.go('/upload')),
                     
                     const Divider(height: 40, color: Color(0xFFEEEEEE)),

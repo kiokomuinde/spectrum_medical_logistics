@@ -13,7 +13,9 @@ import 'package:spectrum_medical_logistics/screens/home_screen.dart';
 import 'package:spectrum_medical_logistics/screens/auth_screen.dart'; 
 import 'package:spectrum_medical_logistics/screens/product_catalog_screen.dart';
 import 'package:spectrum_medical_logistics/screens/medical_product_detail_screen.dart'; 
-import 'package:spectrum_medical_logistics/screens/product_upload_screen.dart'; // <--- IMPORTED UPLOAD SCREEN
+import 'package:spectrum_medical_logistics/screens/product_upload_screen.dart';
+import 'package:spectrum_medical_logistics/screens/solutions_screen.dart';
+import 'package:spectrum_medical_logistics/screens/cart_screen.dart'; // <--- 1. IMPORT ADDED
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +46,9 @@ const Map<String, String> _navPaths = {
   'SignUp': '/sign-up',
   'Products': '/products',
   'ProductDetail': '/product/:id',
-  'Upload': '/upload', // <--- ADDED UPLOAD PATH
+  'Upload': '/upload',
+  'Solutions': '/solutions',
+  'Cart': '/cart', // <--- 2. PATH DEFINED
 };
 
 // --- GO ROUTER SETUP ---
@@ -75,10 +79,18 @@ final GoRouter _router = GoRouter(
         return MedicalProductDetailScreen(productId: productId);
       },
     ),
-    // --- ADDED UPLOAD ROUTE ---
     GoRoute(
       path: _navPaths['Upload']!,
       builder: (context, state) => const ProductUploadScreen(),
+    ),
+    GoRoute(
+      path: _navPaths['Solutions']!,
+      builder: (context, state) => const SolutionsScreen(),
+    ),
+    // --- 3. ROUTE ADDED ---
+    GoRoute(
+      path: _navPaths['Cart']!,
+      builder: (context, state) => const CartScreen(),
     ),
   ],
 );
